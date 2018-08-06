@@ -22,7 +22,7 @@ from py532lib.frame import *
 from py532lib.constants import *
 
 
-LOGGING_ENABLED = True
+LOGGING_ENABLED = False
 LOG_LEVEL = logging.DEBUG
 DEFAULT_DELAY = 0.005
 
@@ -95,11 +95,8 @@ class Pn532_i2c:
                     logging.debug("readResponse..............Reading.")
     
                     sleep(DEFAULT_DELAY)
-                    if sys.version_info > (3, 0):
-                        response = self.PN532.transaction(
-                            reading(self.address, 255))
-                    else:
-                        response = self.PN532.read_i2c_block_data(self.address, 255)
+                    response = self.PN532.transaction(
+                        reading(self.address, 255))
                     logging.debug(response)
                     logging.debug("readResponse..............Read.")
                 except TimeoutException:
@@ -143,20 +140,13 @@ class Pn532_i2c:
                 logging.debug("send_command...........Sending.")
 
                 sleep(DEFAULT_DELAY)
-                data = frame.to_tuple()
-                logging.debug(data)
-
                 if sys.version_info > (3, 0):
                     self.PN532.transaction(
-                        writing(self.address, data))
+                        writing(self.address, frame.to_tuple()))
                 else:
-                    cmd = data[0]
-                    data[0] = len(data) - 1
-                    ldata = []
-                    for byte in data:
-                        ldata.append(long(byte))
-                    logging.debug(len(ldata[1:]))
-                    self.PN532.write_i2c_block_data(self.address, data[0], ldata[1:])
+                    self.PN532.write_i2c_block_data(self.address, frame.to_tuple())
+
+                logging.debug(frame.to_tuple())
 
                 logging.debug("send_command...........Sent.")
             except Exception as ex:
