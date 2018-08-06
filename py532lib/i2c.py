@@ -154,7 +154,7 @@ class Pn532_i2c:
                     data[0] = len(data) - 1
                     ldata = []
                     for byte in data:
-                        ldata.append(int(byte))
+                        ldata.append(long(byte))
                     logging.debug(len(ldata[1:]))
                     self.PN532.write_i2c_block_data(self.address, data[0], ldata[1:])
 
