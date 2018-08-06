@@ -13,10 +13,7 @@ sys.path.append(lib_path)
 
 from time import sleep
 import logging
-if sys.version_info > (3, 0):
-	from quick2wire.i2c import I2CMaster, reading, writing
-else:
-	import smbus
+from quick2wire.i2c import I2CMaster, reading, writing
 from py532lib.i2c import *
 from py532lib.frame import *
 from py532lib.constants import *
@@ -62,10 +59,7 @@ class Pn532_i2c:
 
         self.address = address
         self.i2c_channel = i2c_channel
-        if sys.version_info > (3, 0):
-            self.PN532 = I2CMaster(self.i2c_channel)
-        else:
-            self.PN532 = smbus.SMBus(self.i2c_channel)
+        self.PN532 = I2CMaster(self.i2c_channel)
 
     def send_command_check_ack(self, frame, timeout = 3600):
         """Sends a command frame, and waits for an ACK frame.
@@ -140,11 +134,8 @@ class Pn532_i2c:
                 logging.debug("send_command...........Sending.")
 
                 sleep(DEFAULT_DELAY)
-                if sys.version_info > (3, 0):
-                    self.PN532.transaction(
-                        writing(self.address, frame.to_tuple()))
-                else:
-                    self.PN532.write_i2c_block_data(self.address, frame.to_tuple())
+                self.PN532.transaction(
+                    writing(self.address, frame.to_tuple()))
 
                 logging.debug(frame.to_tuple())
 
@@ -182,7 +173,7 @@ class Pn532_i2c:
         finally:
         	signal.signal(signal.SIGALRM, old_handler)
 
-    def read_mifare(self, timeout = 3600):
+    def read_mifare(self, timeout):
         """Wait for a MiFARE card to be in the PN532's field, and read it's UID."""
         frame = Pn532Frame(frame_type=PN532_FRAME_TYPE_DATA, data=bytearray([PN532_COMMAND_INLISTPASSIVETARGET, 0x01, 0x00]))
         self.send_command_check_ack(frame, timeout)
@@ -193,13 +184,9 @@ class Pn532_i2c:
         """Reset the I2C communication connection."""
         logging.debug("I2C Reset...")
 
-        if sys.version_info > (3, 0):
-            self.PN532.close()
-            del self.PN532
-            self.PN532 = I2CMaster(self.i2c_channel)
-        else:
-            del self.PN532
-            self.PN532 = smbus.SMBus(self.i2c_channel)
+        self.PN532.close()
+        del self.PN532
+        self.PN532 = I2CMaster(self.i2c_channel)
 
         logging.debug("I2C Reset............Created.")
 
@@ -222,6 +209,5 @@ class Pn532_i2c:
 
     def __exit__(self, type, value, traceback):
         """Make sure the I2C communication channel is closed."""
-        if sys.version_info > (3, 0):
-            self.PN532.close()
+        self.PN532.close()
         del self.PN532
